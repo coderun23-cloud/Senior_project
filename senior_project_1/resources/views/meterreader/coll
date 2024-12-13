@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+@include('meterreader.css')
+<meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        /* Title Styling */
+        .title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #000000;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* Toggle buttons for switching sections */
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 45px;
+            margin-top: 20px;
+        }
+
+        .btn-group .btn {
+           
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+       
+
+        .btn-group .btn:focus {
+            outline: none;
+        }
+
+        .btn-group .btn.active {
+          border: #5d5d5d solid 3px;
+            color: white;
+        }
+
+        /* Card Styles */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+            margin-left: 40px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            background-color: #3948bb;
+            color: #fff;
+            font-size: 18px;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .card-body {
+            padding: 20px;
+            margin-left: 40px;
+        }
+
+        .form-control {
+            background: #e1e8f4;
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #3948bb;
+            outline: none;
+            background: #fff;
+        }
+
+        .btn-primary {
+          
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+     
+
+        /* Section for when forms are hidden */
+        .hidden {
+            display: none;
+        }
+
+        /* Styling for Input Group */
+        .mb-3 label {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* OCR Result Display */
+        #ocr-result {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        /* Camera feed styling */
+        #videoElement {
+            width: 50%;
+            height: 50%;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+
+        #startButton,
+        #captureButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+        
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+     
+
+        #camera-container {
+            text-align: center;
+        }
+
+        /* Display saved number (OCR result) */
+        #savedNumber {
+            margin-top: 20px;
+            font-size: 18px;
+            color: green;
+        }
+
+        #stopButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #stopButton:hover {
+            background: #c82333;
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            margin-top: 30px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        #camera-container {
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    width: 50%;
+    height: 50%;
+}
+
+#videoElement {
+    width: 100%;
+    height: 100%;
+    transition: transform 1s ease-in-out;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+#rotateLeftButton, #rotateRightButton {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+#rotateRightButton {
+    left: auto;
+    right: 10px;
+}
+
+    </style>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+<body>
+    <div class="wrapper">
+        @include('meterreader.sidebar')
+        <div class="main">
+            @include('meterreader.header')
+            <br>
+            <!-- Title of the Page -->
+            <div class="title">
+                <i  style="	  color: #3498db;" class="fas fa-tachometer-alt"></i>
+
+                Meter Reading Registration Form
+            </div>
+          
+            <!-- Toggle Buttons for Switching Between Manual and Scanning -->
+            <div class="container-fluid p-0 mb-4" style="margin-left: 400px;">
+                <div class="btn-group" role="group" aria-label="Toggle Bill Registration Method">
+                    <button type="button" class="btn btn-secondary" id="manualTabBtn">Manual Bill Registration</button>
+                    <button type="button" class="btn btn-secondary" id="scanTabBtn">Scan Bill Registration</button>
+                </div>
+            </div>
+
+            <!-- Bill Registration Forms - Hidden by Default, Shown Based on Tab Selection -->
+            <div class="container-fluid p-0">
+                <div class="row">
+                    <form action="{{ url('manual_reading') }}" method="post">
+                        @csrf  <!-- CSRF token for security -->
+                    
+                        <div class="col hidden" id="manualSection">
+                            <div class="card flex-fill mb-4 rounded-lg">
+                                
+                                @if(session('success'))
+                                    <div class="alert alert-success alert-dismissible">{{ session('success') }}</div>
+                                @elseif (session('alert'))
+                                    <div class="alert alert-danger alert-dismissible">{{ session('alert') }}</div>
+                                @endif
+                    
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Manual Bill Registration</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Bill Registration Form (Manual) -->
+                                    <div class="mb-3">
+                                        <label for="customer_name" class="form-label">Customer Name</label>
+                                        <input type="text" class="form-control" name="customer_name" id="customer_name" placeholder="Enter customer name" value="{{ old('customer_name') }}">
+                                        @error('customer_name') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                    
+                                    <div class="mb-3">
+                                        <label for="amount" class="form-label">Amount</label>
+                                        <input type="number" class="form-control" name="amount" id="amount" placeholder="Enter bill amount" value="{{ old('amount') }}">
+                                        @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                    
+                                    <div class="mb-3">
+                                        <!-- Hidden 'reading_type' -->
+                                        <input type="hidden" name="reading_type" value="scanning">
+                                    </div>
+                    
+                                  
+                    
+                                    <button type="submit" class="btn btn-secondary">Register Bill</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    
+
+                    <!-- Scanning Bill Registration Section -->
+             <!-- Scanning Bill Registration Section -->
+             <div class="col hidden" id="scanSection">
+                <div class="card flex-fill mb-4 rounded-lg">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Scan Reading Registration</h5>
+                    </div>
+                    @if(session('success'))
+                    <div class="alert alert-success alert-dismissible">{{ session('success') }}</div>
+                @elseif (session('alert'))
+                    <div class="alert alert-danger alert-dismissible">{{ session('alert') }}</div>
+                @endif
+                
+                    <!-- Scan and OCR Result Section -->
+                    <div class="card-body">
+                        <div id="camera-container">
+                            <video id="videoElement" autoplay></video>
+                            <button id="rotateLeftButton">◁</button>
+                            <button id="rotateRightButton">▷</button>
+                            <button id="startButton" class="btn btn-secondary">Start Scanning</button>
+                            <button id="stopButton" class="hidden">Stop Scaninng</button>
+                            <button id="captureButton" class="hidden" class="btn btn-secondary">Scan Reading</button>
+                        </div>
+                    
+                        <!-- Customer Name Input -->
+                      
+                    
+                        <div id="ocr-result" class="hidden">
+                            <h3>OCR Result:</h3>
+                            <p id="ocrAmount">Amount: Not found</p>
+                        </div>
+                    
+                        <div id="savedNumber" class="hidden">
+                            <p><strong>Saved Number from Scan:</strong> <span id="savedAmount"></span></p>
+                        </div>
+                    
+                    
+                        <button id="discardButton" class="hidden">Discard</button>
+                    
+                    
+                </div>
+                <form id="saveForm" method="POST" action="{{ url('save-bill-reading') }}">
+                    @csrf  <!-- CSRF token for security -->
+                    <label for="scanned_amount" class="form-label">Customer Name</label>
+                    <input type="text" name="customer_name" id="formCustomerName" class="form-control" placeholder="enter customer name" required>
+                    <label for="scanned_amount" class="form-label">Scanned Amount</label>
+                    <input type="text" class="form-control" id="scanned_amount" name="scanned_amount" placeholder="Amount will be displayed here" readonly><br><br>
+                    <button id="saveButton" type="submit" class="btn btn-secondary">Save</button>
+                </form>
+              
+                
+                    </div>
+                </div>
+                </div><br><br><br>
+                <br>
+                <br>
+                @include('meterreader.footer')
+		</div>
+	</div>
+
+                <script>
+              // Get references to the buttons and sections
+const manualTabBtn = document.getElementById('manualTabBtn');
+const scanTabBtn = document.getElementById('scanTabBtn');
+const manualSection = document.getElementById('manualSection');
+const scanSection = document.getElementById('scanSection');
+const startButton = document.getElementById('startButton');
+const stopButton = document.getElementById('stopButton');
+const captureButton = document.getElementById('captureButton');
+const videoElement = document.getElementById('videoElement');
+const ocrResult = document.getElementById('ocr-result');
+const ocrAmount = document.getElementById('ocrAmount');
+const savedNumber = document.getElementById('savedNumber');
+const savedAmount = document.getElementById('savedAmount');
+const scannedResultsTable = document.getElementById('scannedResultsTable');
+const saveButton = document.getElementById('saveButton');
+const discardButton = document.getElementById('discardButton');
+let mediaStream = null;
+
+// Flag to track the current OCR result (amount)
+let currentAmount = null;
+
+// Set initial active state for buttons
+manualTabBtn.classList.add('active');
+
+ // Initial setup for session-based visibility
+ @if(session('success') || session('alert'))
+        @if(session('success'))
+            // If success, keep the manual section active
+            manualTabBtn.classList.add('active');
+            scanTabBtn.classList.remove('active');
+            manualSection.classList.remove('hidden');
+            scanSection.classList.add('hidden');
+        @elseif(session('alert'))
+            // If alert, keep the manual section active as well
+            manualTabBtn.classList.add('active');
+            scanTabBtn.classList.remove('active');
+            manualSection.classList.remove('hidden');
+            scanSection.classList.add('hidden');
+        @endif
+    @else
+        // Default behavior if no session message
+        manualTabBtn.classList.add('active');
+        scanTabBtn.classList.remove('active');
+        manualSection.classList.remove('hidden');
+        scanSection.classList.add('hidden');
+    @endif
+
+    // Toggle the manual section active state when clicked
+    manualTabBtn.addEventListener('click', function() {
+        manualTabBtn.classList.add('active');
+        scanTabBtn.classList.remove('active');
+        manualSection.classList.remove('hidden');
+        scanSection.classList.add('hidden');
+    });
+
+    // Toggle the scan section active state when clicked
+    scanTabBtn.addEventListener('click', function() {
+        scanTabBtn.classList.add('active');
+        manualTabBtn.classList.remove('active');
+        scanSection.classList.remove('hidden');
+        manualSection.classList.add('hidden');
+    });
+
+
+// Start Camera function
+startButton.addEventListener('click', function() {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(function(stream) {
+            mediaStream = stream;
+            videoElement.srcObject = stream;
+            startButton.classList.add('hidden');
+            stopButton.classList.remove('hidden');
+            captureButton.classList.remove('hidden');
+        })
+        .catch(function(err) {
+            console.log("Error accessing camera: " + err);
+        });
+});
+
+// Stop Camera function
+stopButton.addEventListener('click', function() {
+    if (mediaStream) {
+        const tracks = mediaStream.getTracks();
+        tracks.forEach(track => track.stop());
+        videoElement.srcObject = null;
+        startButton.classList.remove('hidden');
+        stopButton.classList.add('hidden');
+        captureButton.classList.add('hidden');
+        alert("Camera has been turned off.");
+    }
+});
+
+// Capture image when button is clicked
+captureButton.addEventListener('click', function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+    // Image preprocessing: Convert to grayscale and improve contrast
+    ctx.filter = 'grayscale(100%) contrast(200%)';
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+    // Use Tesseract.js to recognize text from captured image
+    Tesseract.recognize(
+        canvas,
+        'eng', // language
+        {
+            logger: (m) => console.log(m), // logs progress (optional)
+        }
+    ).then(({ data: { text } }) => {
+        console.log(text);
+        const amount = extractAmount(text);
+
+        if (amount) {
+            ocrAmount.textContent = amount;
+            savedAmount.textContent = amount;
+            ocrResult.classList.remove('hidden');
+            savedNumber.classList.remove('hidden');
+
+            // Save the scanned amount to the table
+            displayScannedResult(amount);
+
+            // Save to database (Simulated)
+            saveToDatabase(amount);
+        } else {
+            ocrAmount.textContent = 'Not found';
+            savedAmount.textContent = 'Not found';
+        }
+    });
+});
+
+// Function to extract amount from OCR text using regex
+function extractAmount(text) {
+    const regex = /(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)/g;
+    const result = text.match(regex);
+    if (result && result.length > 0) {
+        return result[0]; // Return the first match
+    }
+    return null;
+}
+
+
+saveButton.addEventListener('click', function() {
+    const customerName = document.getElementById('customer_name').value; // Get the customer name from the input
+    const amount = currentAmount;  // The OCR-scanned amount
+    
+    // Debugging: Log values before the if condition
+    console.log("Customer Name:", customerName);
+    console.log("Amount:", amount);
+
+    // Ensure both customerName and amount are provided and valid
+    if (customerName.trim() && !isNaN(amount) && amount > 0) {
+        const data = {
+            customer_name: customerName,
+            amount: amount  // Send both customer name and amount
+        };
+
+        // Send the data to the backend (Laravel)
+        fetch("/save-bill-reading", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Saved successfully:', data);
+
+            // Hide Save and Discard buttons after saving
+            saveButton.classList.add('hidden');
+            discardButton.classList.add('hidden');
+
+            // Reset scanned data section
+            currentAmount = null;
+            ocrResult.classList.add('hidden');
+            savedNumber.classList.add('hidden');
+        })
+        .catch(error => {
+            console.error("Error saving data:", error);
+        });
+    } else {
+        alert('Please ensure both customer name and amount are provided.');
+    }
+});
+
+
+// Function to display scanned result in the table
+function displayScannedResult(amount, customerName) {
+    const newRow = document.createElement('tr');
+    const customerNameCell = document.createElement('td');
+    customerNameCell.textContent = customerName || "Extracted from OCR";
+    const amountCell = document.createElement('td');
+    amountCell.textContent = amount;
+
+    // Action cell (Delete button)
+    const actionCell = document.createElement('td');
+    actionCell.innerHTML = '<button class="btn btn-danger btn-sm">Delete</button>';
+
+    newRow.appendChild(customerNameCell);
+    newRow.appendChild(amountCell);
+    newRow.appendChild(actionCell);
+
+    scannedResultsTable.appendChild(newRow);
+}
+
+// Discard the OCR result
+discardButton.addEventListener('click', function() {
+    // Hide Save and Discard buttons
+    saveButton.classList.add('hidden');
+    discardButton.classList.add('hidden');
+
+    // Reset OCR result display
+    ocrResult.classList.add('hidden');
+    savedNumber.classList.add('hidden');
+});
+
+                </script>
+</body>
+</html>
